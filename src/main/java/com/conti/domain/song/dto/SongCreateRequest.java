@@ -22,6 +22,8 @@ public record SongCreateRequest(
         @Schema(description = "음원 URL")
         String musicUrl,
         @Schema(description = "태그 목록", example = "[\"찬양\", \"경배\"]")
-        List<String> tags
+        List<String> tags,
+        @Schema(description = "곡 구조 섹션 목록")
+        List<SongSectionRequest> sections
 ) {
 }

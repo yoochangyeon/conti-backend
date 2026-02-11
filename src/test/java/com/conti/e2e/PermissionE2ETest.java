@@ -63,7 +63,7 @@ class PermissionE2ETest extends BaseE2ETest {
         @DisplayName("VIEWER는 곡을 생성할 수 없다 (403)")
         void viewerCannotCreateSong() throws Exception {
             SongCreateRequest request = new SongCreateRequest(
-                    "Test Song", "Artist", "C", 120, null, null, null, null
+                    "Test Song", "Artist", "C", 120, null, null, null, null, null
             );
             performPost("/api/v1/teams/" + teamId + "/songs", viewerToken, request)
                     .andExpect(status().isForbidden());
@@ -209,7 +209,7 @@ class PermissionE2ETest extends BaseE2ETest {
         @DisplayName("ADMIN은 곡을 생성할 수 있다 (200)")
         void adminCanCreateSong() throws Exception {
             SongCreateRequest request = new SongCreateRequest(
-                    "Admin Song", "Admin Artist", "E", 130, null, null, null, List.of("경배")
+                    "Admin Song", "Admin Artist", "E", 130, null, null, null, List.of("경배"), null
             );
             performPost("/api/v1/teams/" + teamId + "/songs", adminToken, request)
                     .andExpect(status().isOk())

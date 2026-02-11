@@ -5,13 +5,18 @@ import com.conti.domain.song.dto.SongCreateRequest;
 import com.conti.domain.song.dto.SongDetailResponse;
 import com.conti.domain.song.dto.SongResponse;
 import com.conti.domain.song.dto.SongSearchCondition;
+import com.conti.domain.song.dto.SongSectionRequest;
+import com.conti.domain.song.dto.SongSectionResponse;
 import com.conti.domain.song.dto.SongUpdateRequest;
 import com.conti.domain.song.dto.TagResponse;
+import com.conti.domain.song.entity.SectionType;
 import com.conti.domain.song.entity.Song;
 import com.conti.domain.song.entity.SongFile;
+import com.conti.domain.song.entity.SongSection;
 import com.conti.domain.song.entity.SongTag;
 import com.conti.domain.song.repository.SongFileRepository;
 import com.conti.domain.song.repository.SongRepository;
+import com.conti.domain.song.repository.SongSectionRepository;
 import com.conti.domain.song.repository.SongTagRepository;
 import com.conti.domain.song.repository.SongUsageRepository;
 import com.conti.domain.team.entity.Team;
@@ -57,6 +62,9 @@ class SongServiceTest {
 
     @Mock
     private SongFileRepository songFileRepository;
+
+    @Mock
+    private SongSectionRepository songSectionRepository;
 
     @Mock
     private SongUsageRepository songUsageRepository;
@@ -140,7 +148,7 @@ class SongServiceTest {
             SongCreateRequest request = new SongCreateRequest(
                     "새 찬양", "아티스트", "C", 100, "메모",
                     "https://youtube.com", "https://music.com",
-                    List.of("경배", "감사")
+                    List.of("경배", "감사"), null
             );
 
             given(teamRepository.findById(teamId)).willReturn(Optional.of(team));
@@ -157,12 +165,39 @@ class SongServiceTest {
         }
 
         @Test
+        @DisplayName("섹션과 함께 찬양을 생성한다")
+        void createSong_withSections() {
+            // given
+            Long teamId = 1L;
+            Team team = createTeam();
+            List<SongSectionRequest> sections = List.of(
+                    new SongSectionRequest("INTRO", 0, null, "G", 1, null),
+                    new SongSectionRequest("VERSE", 1, "1절", "G - D - Em - C", 2, "조용하게"),
+                    new SongSectionRequest("CHORUS", 2, null, "C - G - Am - F", 4, null)
+            );
+            SongCreateRequest request = new SongCreateRequest(
+                    "새 찬양", "아티스트", "C", 100, "메모",
+                    null, null, null, sections
+            );
+
+            given(teamRepository.findById(teamId)).willReturn(Optional.of(team));
+            given(songRepository.save(any(Song.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+            // when
+            SongResponse result = songService.createSong(teamId, request);
+
+            // then
+            assertThat(result.title()).isEqualTo("새 찬양");
+            verify(songRepository).save(any(Song.class));
+        }
+
+        @Test
         @DisplayName("팀이 없으면 예외를 던진다")
         void createSong_teamNotFound() {
             // given
             Long teamId = 999L;
             SongCreateRequest request = new SongCreateRequest(
-                    "찬양", null, null, null, null, null, null, null
+                    "찬양", null, null, null, null, null, null, null, null
             );
             given(teamRepository.findById(teamId)).willReturn(Optional.empty());
 
@@ -197,6 +232,41 @@ class SongServiceTest {
             assertThat(result.title()).isEqualTo("이 땅의 모든 찬양");
             assertThat(result.memo()).isEqualTo("메모");
             assertThat(result.usageCount()).isEqualTo(0);
+            assertThat(result.sections()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("섹션이 있는 찬양 상세 정보를 조회한다")
+        void getSong_withSections() {
+            // given
+            Long teamId = 1L;
+            Long songId = 1L;
+            Team team = createTeam();
+            Song song = createSong(team);
+
+            SongSection section = SongSection.builder()
+                    .song(song)
+                    .sectionType(SectionType.CHORUS)
+                    .orderIndex(0)
+                    .label("코러스")
+                    .chords("G - D - Em - C")
+                    .buildUpLevel(4)
+                    .memo("크게")
+                    .build();
+            song.getSongSections().add(section);
+
+            given(songRepository.findById(songId)).willReturn(Optional.of(song));
+            given(songUsageRepository.findBySongId(songId)).willReturn(Collections.emptyList());
+
+            // when
+            SongDetailResponse result = songService.getSong(teamId, songId);
+
+            // then
+            assertThat(result.sections()).hasSize(1);
+            assertThat(result.sections().get(0).sectionType()).isEqualTo("CHORUS");
+            assertThat(result.sections().get(0).label()).isEqualTo("코러스");
+            assertThat(result.sections().get(0).chords()).isEqualTo("G - D - Em - C");
+            assertThat(result.sections().get(0).buildUpLevel()).isEqualTo(4);
         }
 
         @Test
@@ -228,7 +298,7 @@ class SongServiceTest {
             Team team = createTeam();
             Song song = createSong(team);
             SongUpdateRequest request = new SongUpdateRequest(
-                    "수정된 제목", null, null, null, null, null, null, null
+                    "수정된 제목", null, null, null, null, null, null, null, null
             );
 
             given(songRepository.findById(songId)).willReturn(Optional.of(song));
@@ -251,7 +321,7 @@ class SongServiceTest {
             Song song = createSong(team);
             SongUpdateRequest request = new SongUpdateRequest(
                     null, null, null, null, null, null, null,
-                    List.of("선포", "사랑")
+                    List.of("선포", "사랑"), null
             );
 
             given(songRepository.findById(songId)).willReturn(Optional.of(song));
@@ -261,6 +331,88 @@ class SongServiceTest {
 
             // then
             assertThat(result.tags()).containsExactly("선포", "사랑");
+        }
+
+        @Test
+        @DisplayName("섹션을 수정하면 기존 섹션이 교체된다")
+        void updateSong_replaceSections() {
+            // given
+            Long teamId = 1L;
+            Long songId = 1L;
+            Team team = createTeam();
+            Song song = createSong(team);
+
+            // 기존 섹션 추가
+            SongSection existing = SongSection.builder()
+                    .song(song)
+                    .sectionType(SectionType.INTRO)
+                    .orderIndex(0)
+                    .build();
+            song.getSongSections().add(existing);
+
+            List<SongSectionRequest> newSections = List.of(
+                    new SongSectionRequest("VERSE", 0, "1절", "Am - F", 2, null),
+                    new SongSectionRequest("CHORUS", 1, null, "C - G", 4, null)
+            );
+            SongUpdateRequest request = new SongUpdateRequest(
+                    null, null, null, null, null, null, null, null, newSections
+            );
+
+            given(songRepository.findById(songId)).willReturn(Optional.of(song));
+
+            // when
+            songService.updateSong(teamId, songId, request);
+
+            // then
+            assertThat(song.getSongSections()).hasSize(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("updateSections")
+    class UpdateSections {
+
+        @Test
+        @DisplayName("곡 구조를 전체 교체한다")
+        void updateSections_success() {
+            // given
+            Long teamId = 1L;
+            Long songId = 1L;
+            Team team = createTeam();
+            Song song = createSong(team);
+
+            List<SongSectionRequest> requests = List.of(
+                    new SongSectionRequest("INTRO", 0, null, "G", 1, null),
+                    new SongSectionRequest("VERSE", 1, "1절", "G - D - Em - C", 2, "조용하게"),
+                    new SongSectionRequest("CHORUS", 2, "코러스", "C - G - Am - F", 4, "크게")
+            );
+
+            given(songRepository.findById(songId)).willReturn(Optional.of(song));
+
+            // when
+            List<SongSectionResponse> result = songService.updateSections(teamId, songId, requests);
+
+            // then
+            assertThat(song.getSongSections()).hasSize(3);
+            assertThat(song.getSongSections().get(0).getSectionType()).isEqualTo(SectionType.INTRO);
+            assertThat(song.getSongSections().get(1).getSectionType()).isEqualTo(SectionType.VERSE);
+            assertThat(song.getSongSections().get(1).getLabel()).isEqualTo("1절");
+            assertThat(song.getSongSections().get(2).getBuildUpLevel()).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("곡이 없으면 예외를 던진다")
+        void updateSections_songNotFound() {
+            // given
+            Long teamId = 1L;
+            Long songId = 999L;
+            given(songRepository.findById(songId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> songService.updateSections(teamId, songId, List.of()))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.SONG_NOT_FOUND));
         }
     }
 

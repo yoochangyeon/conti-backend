@@ -59,6 +59,10 @@ public class Song extends BaseEntity {
     @Builder.Default
     private List<SongFile> songFiles = new ArrayList<>();
 
+    @OneToMany(mappedBy = "song", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SongSection> songSections = new ArrayList<>();
+
     public void updateTitle(String title) {
         this.title = title;
     }

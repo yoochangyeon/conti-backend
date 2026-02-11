@@ -43,7 +43,7 @@ class SongCrudE2ETest extends BaseE2ETest {
             SongCreateRequest request = new SongCreateRequest(
                     "이 땅의 모든 찬양", "마커스", "G", 120,
                     "좋은 경배곡입니다", "https://youtube.com/song1", "https://music.com/song1",
-                    List.of("경배", "감사")
+                    List.of("경배", "감사"), null
             );
 
             performPost("/api/v1/teams/" + teamId + "/songs", token, request)
@@ -62,7 +62,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         @DisplayName("태그 없이 최소 정보로 곡을 생성한다")
         void createSongMinimal() throws Exception {
             SongCreateRequest request = new SongCreateRequest(
-                    "간단한 곡", null, null, null, null, null, null, null
+                    "간단한 곡", null, null, null, null, null, null, null, null
             );
 
             performPost("/api/v1/teams/" + teamId + "/songs", token, request)
@@ -75,7 +75,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         @DisplayName("제목 없이 곡 생성 시 400 에러를 반환한다")
         void createSongWithoutTitle() throws Exception {
             SongCreateRequest request = new SongCreateRequest(
-                    null, "Artist", null, null, null, null, null, null
+                    null, "Artist", null, null, null, null, null, null, null
             );
 
             performPost("/api/v1/teams/" + teamId + "/songs", token, request)
@@ -86,7 +86,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         @DisplayName("빈 제목으로 곡 생성 시 400 에러를 반환한다")
         void createSongWithBlankTitle() throws Exception {
             SongCreateRequest request = new SongCreateRequest(
-                    "  ", "Artist", null, null, null, null, null, null
+                    "  ", "Artist", null, null, null, null, null, null, null
             );
 
             performPost("/api/v1/teams/" + teamId + "/songs", token, request)
@@ -105,7 +105,7 @@ class SongCrudE2ETest extends BaseE2ETest {
             SongCreateRequest request = new SongCreateRequest(
                     "상세 조회 곡", "아티스트", "D", 100,
                     "메모 내용", "https://youtube.com/detail", "https://music.com/detail",
-                    List.of("경배", "찬양")
+                    List.of("경배", "찬양"), null
             );
 
             MvcResult createResult = performPost("/api/v1/teams/" + teamId + "/songs", token, request)
@@ -145,7 +145,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         void partialUpdateSong() throws Exception {
             // 곡 생성
             SongCreateRequest createRequest = new SongCreateRequest(
-                    "원래 제목", "원래 아티스트", "C", 120, "원래 메모", null, null, List.of("경배")
+                    "원래 제목", "원래 아티스트", "C", 120, "원래 메모", null, null, List.of("경배"), null
             );
             MvcResult result = performPost("/api/v1/teams/" + teamId + "/songs", token, createRequest)
                     .andExpect(status().isOk())
@@ -154,7 +154,7 @@ class SongCrudE2ETest extends BaseE2ETest {
 
             // 제목만 수정
             SongUpdateRequest updateRequest = new SongUpdateRequest(
-                    "수정된 제목", null, null, null, null, null, null, null
+                    "수정된 제목", null, null, null, null, null, null, null, null
             );
             performPatch("/api/v1/teams/" + teamId + "/songs/" + songId, token, updateRequest)
                     .andExpect(status().isOk())
@@ -169,7 +169,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         void updateSongTags() throws Exception {
             // 곡 생성
             SongCreateRequest createRequest = new SongCreateRequest(
-                    "태그 변경 곡", null, null, null, null, null, null, List.of("경배", "감사")
+                    "태그 변경 곡", null, null, null, null, null, null, List.of("경배", "감사"), null
             );
             MvcResult result = performPost("/api/v1/teams/" + teamId + "/songs", token, createRequest)
                     .andExpect(status().isOk())
@@ -178,7 +178,7 @@ class SongCrudE2ETest extends BaseE2ETest {
 
             // 태그 변경
             SongUpdateRequest updateRequest = new SongUpdateRequest(
-                    null, null, null, null, null, null, null, List.of("찬양", "선포", "회개")
+                    null, null, null, null, null, null, null, List.of("찬양", "선포", "회개"), null
             );
             performPatch("/api/v1/teams/" + teamId + "/songs/" + songId, token, updateRequest)
                     .andExpect(status().isOk())
@@ -195,7 +195,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         void uploadAndDeleteFileByUrl() throws Exception {
             // 곡 생성
             SongCreateRequest createRequest = new SongCreateRequest(
-                    "파일 테스트 곡", null, null, null, null, null, null, null
+                    "파일 테스트 곡", null, null, null, null, null, null, null, null
             );
             MvcResult result = performPost("/api/v1/teams/" + teamId + "/songs", token, createRequest)
                     .andExpect(status().isOk())
@@ -247,7 +247,7 @@ class SongCrudE2ETest extends BaseE2ETest {
         void deleteSongAndVerify() throws Exception {
             // 곡 생성
             SongCreateRequest createRequest = new SongCreateRequest(
-                    "삭제 대상 곡", null, null, null, null, null, null, null
+                    "삭제 대상 곡", null, null, null, null, null, null, null, null
             );
             MvcResult result = performPost("/api/v1/teams/" + teamId + "/songs", token, createRequest)
                     .andExpect(status().isOk())
@@ -274,7 +274,7 @@ class SongCrudE2ETest extends BaseE2ETest {
             // 곡 5개 생성
             for (int i = 1; i <= 5; i++) {
                 SongCreateRequest request = new SongCreateRequest(
-                        "곡 " + i, "아티스트 " + i, null, null, null, null, null, null
+                        "곡 " + i, "아티스트 " + i, null, null, null, null, null, null, null
                 );
                 performPost("/api/v1/teams/" + teamId + "/songs", token, request);
             }

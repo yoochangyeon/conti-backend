@@ -32,7 +32,9 @@ public record SongDetailResponse(
         @Schema(description = "악보 파일 목록")
         List<SongFileResponse> files,
         @Schema(description = "콘티 사용 횟수", example = "5")
-        long usageCount
+        long usageCount,
+        @Schema(description = "곡 구조 섹션 목록")
+        List<SongSectionResponse> sections
 ) {
 
     public static SongDetailResponse from(Song song, long usageCount) {
@@ -42,6 +44,10 @@ public record SongDetailResponse(
 
         List<SongFileResponse> fileResponses = song.getSongFiles().stream()
                 .map(SongFileResponse::from)
+                .toList();
+
+        List<SongSectionResponse> sectionResponses = song.getSongSections().stream()
+                .map(SongSectionResponse::from)
                 .toList();
 
         return new SongDetailResponse(
@@ -56,7 +62,8 @@ public record SongDetailResponse(
                 song.getYoutubeUrl(),
                 song.getMusicUrl(),
                 fileResponses,
-                usageCount
+                usageCount,
+                sectionResponses
         );
     }
 }

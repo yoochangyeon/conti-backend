@@ -49,7 +49,7 @@ class WorshipFlowE2ETest extends BaseE2ETest {
         // 2. 곡 3개 등록 (각각 다른 태그)
         SongCreateRequest song1Request = new SongCreateRequest(
                 "이 땅의 모든 찬양", "마커스", "G", 120,
-                "경배 곡 메모", "https://youtube.com/1", null, List.of("경배")
+                "경배 곡 메모", "https://youtube.com/1", null, List.of("경배"), null
         );
         MvcResult song1Result = performPost("/api/v1/teams/" + teamId + "/songs", token, song1Request)
                 .andExpect(status().isOk())
@@ -60,7 +60,7 @@ class WorshipFlowE2ETest extends BaseE2ETest {
 
         SongCreateRequest song2Request = new SongCreateRequest(
                 "감사해", "찬미워십", "D", 100,
-                "감사 곡 메모", null, null, List.of("감사")
+                "감사 곡 메모", null, null, List.of("감사"), null
         );
         MvcResult song2Result = performPost("/api/v1/teams/" + teamId + "/songs", token, song2Request)
                 .andExpect(status().isOk())
@@ -70,7 +70,7 @@ class WorshipFlowE2ETest extends BaseE2ETest {
 
         SongCreateRequest song3Request = new SongCreateRequest(
                 "주님의 영", "어노인팅", "C", 80,
-                "찬양 곡 메모", null, null, List.of("찬양")
+                "찬양 곡 메모", null, null, List.of("찬양"), null
         );
         MvcResult song3Result = performPost("/api/v1/teams/" + teamId + "/songs", token, song3Request)
                 .andExpect(status().isOk())
@@ -156,10 +156,10 @@ class WorshipFlowE2ETest extends BaseE2ETest {
 
         // 곡 2개 등록
         SongCreateRequest req1 = new SongCreateRequest(
-                "Amazing Grace", "전통찬송", "C", 80, null, null, null, List.of("찬양")
+                "Amazing Grace", "전통찬송", "C", 80, null, null, null, List.of("찬양"), null
         );
         SongCreateRequest req2 = new SongCreateRequest(
-                "은혜 아니면", "마커스", "D", 100, null, null, null, List.of("경배")
+                "은혜 아니면", "마커스", "D", 100, null, null, null, List.of("경배"), null
         );
         performPost("/api/v1/teams/" + teamId + "/songs", token, req1);
         performPost("/api/v1/teams/" + teamId + "/songs", token, req2);

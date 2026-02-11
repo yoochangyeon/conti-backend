@@ -6,15 +6,20 @@ import com.conti.domain.song.dto.SongDetailResponse;
 import com.conti.domain.song.dto.SongFileResponse;
 import com.conti.domain.song.dto.SongResponse;
 import com.conti.domain.song.dto.SongSearchCondition;
+import com.conti.domain.song.dto.SongSectionRequest;
+import com.conti.domain.song.dto.SongSectionResponse;
 import com.conti.domain.song.dto.SongUpdateRequest;
 import com.conti.domain.song.dto.SongUsageResponse;
 import com.conti.domain.song.dto.TagResponse;
+import com.conti.domain.song.entity.SectionType;
 import com.conti.domain.song.entity.Song;
 import com.conti.domain.song.entity.SongFile;
+import com.conti.domain.song.entity.SongSection;
 import com.conti.domain.song.entity.SongTag;
 import com.conti.domain.song.entity.SongUsage;
 import com.conti.domain.song.repository.SongFileRepository;
 import com.conti.domain.song.repository.SongRepository;
+import com.conti.domain.song.repository.SongSectionRepository;
 import com.conti.domain.song.repository.SongTagRepository;
 import com.conti.domain.song.repository.SongUsageRepository;
 import com.conti.domain.team.entity.Team;
@@ -39,6 +44,7 @@ public class SongService {
     private final SongRepository songRepository;
     private final SongTagRepository songTagRepository;
     private final SongFileRepository songFileRepository;
+    private final SongSectionRepository songSectionRepository;
     private final SongUsageRepository songUsageRepository;
     private final TeamRepository teamRepository;
     private final SetlistRepository setlistRepository;
@@ -72,6 +78,21 @@ public class SongService {
                         .tag(tagName)
                         .build();
                 song.getSongTags().add(songTag);
+            }
+        }
+
+        if (request.sections() != null) {
+            for (SongSectionRequest sectionReq : request.sections()) {
+                SongSection section = SongSection.builder()
+                        .song(song)
+                        .sectionType(SectionType.valueOf(sectionReq.sectionType()))
+                        .orderIndex(sectionReq.orderIndex())
+                        .label(sectionReq.label())
+                        .chords(sectionReq.chords())
+                        .buildUpLevel(sectionReq.buildUpLevel())
+                        .memo(sectionReq.memo())
+                        .build();
+                song.getSongSections().add(section);
             }
         }
 
@@ -124,8 +145,51 @@ public class SongService {
                 song.getSongTags().add(songTag);
             }
         }
+        if (request.sections() != null) {
+            song.getSongSections().clear();
+            for (SongSectionRequest sectionReq : request.sections()) {
+                SongSection section = SongSection.builder()
+                        .song(song)
+                        .sectionType(SectionType.valueOf(sectionReq.sectionType()))
+                        .orderIndex(sectionReq.orderIndex())
+                        .label(sectionReq.label())
+                        .chords(sectionReq.chords())
+                        .buildUpLevel(sectionReq.buildUpLevel())
+                        .memo(sectionReq.memo())
+                        .build();
+                song.getSongSections().add(section);
+            }
+        }
 
         return SongResponse.from(song);
+    }
+
+    @Transactional
+    public List<SongSectionResponse> updateSections(Long teamId, Long songId, List<SongSectionRequest> requests) {
+        Song song = songRepository.findById(songId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SONG_NOT_FOUND));
+
+        song.getSongSections().clear();
+        songRepository.flush();
+
+        for (SongSectionRequest sectionReq : requests) {
+            SongSection section = SongSection.builder()
+                    .song(song)
+                    .sectionType(SectionType.valueOf(sectionReq.sectionType()))
+                    .orderIndex(sectionReq.orderIndex())
+                    .label(sectionReq.label())
+                    .chords(sectionReq.chords())
+                    .buildUpLevel(sectionReq.buildUpLevel())
+                    .memo(sectionReq.memo())
+                    .build();
+            song.getSongSections().add(section);
+        }
+
+        songRepository.flush();
+
+        return song.getSongSections().stream()
+                .map(SongSectionResponse::from)
+                .toList();
     }
 
     @Transactional

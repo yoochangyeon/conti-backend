@@ -5,6 +5,8 @@ import com.conti.domain.song.dto.SongDetailResponse;
 import com.conti.domain.song.dto.SongFileResponse;
 import com.conti.domain.song.dto.SongResponse;
 import com.conti.domain.song.dto.SongSearchCondition;
+import com.conti.domain.song.dto.SongSectionRequest;
+import com.conti.domain.song.dto.SongSectionResponse;
 import com.conti.domain.song.dto.SongUpdateRequest;
 import com.conti.domain.song.dto.SongUsageResponse;
 import com.conti.domain.song.service.SongService;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -104,6 +107,17 @@ public class SongController {
             @Parameter(description = "곡 ID") @PathVariable Long songId
     ) {
         return ApiResponse.ok(songService.getSongUsages(songId));
+    }
+
+    @Operation(summary = "곡 구조 전체 교체", description = "곡의 섹션 목록을 전체 교체합니다 (PUT 시맨틱)")
+    @TeamAuth(roles = {"ADMIN"})
+    @PutMapping("/{songId}/sections")
+    public ApiResponse<List<SongSectionResponse>> updateSections(
+            @Parameter(description = "팀 ID") @PathVariable Long teamId,
+            @Parameter(description = "곡 ID") @PathVariable Long songId,
+            @Valid @RequestBody List<SongSectionRequest> requests
+    ) {
+        return ApiResponse.ok(songService.updateSections(teamId, songId, requests));
     }
 
     @Operation(summary = "악보 파일 업로드")
