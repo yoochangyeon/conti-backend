@@ -1,10 +1,13 @@
 package com.conti.domain.setlist.entity;
 
+import com.conti.domain.schedule.entity.ServiceSchedule;
 import com.conti.domain.team.entity.Team;
 import com.conti.global.common.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -41,8 +44,9 @@ public class Setlist extends BaseEntity {
     @Column(name = "worship_date", nullable = false)
     private LocalDate worshipDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "worship_type", length = 50)
-    private String worshipType;
+    private WorshipType worshipType;
 
     @Column(name = "leader_id")
     private Long leaderId;
@@ -54,6 +58,10 @@ public class Setlist extends BaseEntity {
     @Builder.Default
     private List<SetlistItem> setlistItems = new ArrayList<>();
 
+    @OneToMany(mappedBy = "setlist", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ServiceSchedule> schedules = new ArrayList<>();
+
     public void updateTitle(String title) {
         this.title = title;
     }
@@ -62,7 +70,7 @@ public class Setlist extends BaseEntity {
         this.worshipDate = worshipDate;
     }
 
-    public void updateWorshipType(String worshipType) {
+    public void updateWorshipType(WorshipType worshipType) {
         this.worshipType = worshipType;
     }
 

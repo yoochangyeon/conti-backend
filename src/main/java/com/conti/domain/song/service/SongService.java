@@ -8,9 +8,11 @@ import com.conti.domain.song.dto.SongResponse;
 import com.conti.domain.song.dto.SongSearchCondition;
 import com.conti.domain.song.dto.SongSectionRequest;
 import com.conti.domain.song.dto.SongSectionResponse;
+import com.conti.domain.song.dto.SongStatsResponse;
 import com.conti.domain.song.dto.SongUpdateRequest;
 import com.conti.domain.song.dto.SongUsageResponse;
 import com.conti.domain.song.dto.TagResponse;
+import com.conti.domain.song.dto.TopSongResponse;
 import com.conti.domain.song.entity.SectionType;
 import com.conti.domain.song.entity.Song;
 import com.conti.domain.song.entity.SongFile;
@@ -24,6 +26,8 @@ import com.conti.domain.song.repository.SongTagRepository;
 import com.conti.domain.song.repository.SongUsageRepository;
 import com.conti.domain.team.entity.Team;
 import com.conti.domain.team.repository.TeamRepository;
+import com.conti.domain.user.entity.User;
+import com.conti.domain.user.repository.UserRepository;
 import com.conti.global.error.BusinessException;
 import com.conti.global.error.ErrorCode;
 import com.conti.infra.s3.S3FileService;
@@ -34,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -48,6 +53,7 @@ public class SongService {
     private final SongUsageRepository songUsageRepository;
     private final TeamRepository teamRepository;
     private final SetlistRepository setlistRepository;
+    private final UserRepository userRepository;
     private final S3FileService s3FileService;
 
     public Page<SongResponse> getSongs(Long teamId, SongSearchCondition condition, Pageable pageable) {
@@ -104,9 +110,10 @@ public class SongService {
         Song song = songRepository.findById(songId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SONG_NOT_FOUND));
 
-        long usageCount = songUsageRepository.findBySongId(songId).size();
+        long usageCount = songUsageRepository.countBySongId(songId);
+        LocalDate lastUsedAt = songUsageRepository.findLastUsedAt(songId);
 
-        return SongDetailResponse.from(song, usageCount);
+        return SongDetailResponse.from(song, usageCount, lastUsedAt);
     }
 
     @Transactional
@@ -259,6 +266,55 @@ public class SongService {
         if (!removed) {
             throw new BusinessException(ErrorCode.SONG_NOT_FOUND);
         }
+    }
+
+    public List<TopSongResponse> getTopSongs(Long teamId, LocalDate fromDate, LocalDate toDate, int limit) {
+        return songRepository.findTopSongs(teamId, fromDate, toDate, limit);
+    }
+
+    public SongStatsResponse getSongStats(Long teamId, Long songId) {
+        Song song = songRepository.findById(songId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SONG_NOT_FOUND));
+
+        long totalCount = songUsageRepository.countBySongId(songId);
+        LocalDate lastUsedAt = songUsageRepository.findLastUsedAt(songId);
+
+        List<SongStatsResponse.MonthlyUsage> monthlyUsages = songUsageRepository.findMonthlyUsage(songId)
+                .stream()
+                .map(row -> new SongStatsResponse.MonthlyUsage(
+                        ((Number) row[0]).intValue(),
+                        ((Number) row[1]).intValue(),
+                        ((Number) row[2]).longValue()))
+                .toList();
+
+        List<SongStatsResponse.KeyUsage> keyDistribution = songUsageRepository.findKeyDistribution(songId)
+                .stream()
+                .map(row -> new SongStatsResponse.KeyUsage(
+                        (String) row[0],
+                        ((Number) row[1]).longValue()))
+                .toList();
+
+        List<SongStatsResponse.LeaderUsage> leaderBreakdown = songUsageRepository.findLeaderBreakdown(songId)
+                .stream()
+                .map(row -> {
+                    Long leaderId = ((Number) row[0]).longValue();
+                    String leaderName = userRepository.findById(leaderId)
+                            .map(User::getName)
+                            .orElse("Unknown");
+                    return new SongStatsResponse.LeaderUsage(leaderId, leaderName, ((Number) row[1]).longValue());
+                })
+                .toList();
+
+        return new SongStatsResponse(
+                song.getId(),
+                song.getTitle(),
+                song.getArtist(),
+                totalCount,
+                lastUsedAt,
+                monthlyUsages,
+                keyDistribution,
+                leaderBreakdown
+        );
     }
 
     public List<TagResponse> getTeamTags(Long teamId) {

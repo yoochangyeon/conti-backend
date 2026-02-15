@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.conti.domain.setlist.entity.WorshipType;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -62,8 +64,8 @@ public class SetlistQueryRepositoryImpl implements SetlistQueryRepository {
         return setlist.worshipDate.loe(toDate);
     }
 
-    private BooleanExpression worshipTypeEquals(String worshipType) {
-        if (worshipType == null || worshipType.isBlank()) {
+    private BooleanExpression worshipTypeEquals(WorshipType worshipType) {
+        if (worshipType == null) {
             return null;
         }
         return setlist.worshipType.eq(worshipType);

@@ -4,6 +4,7 @@ import com.conti.domain.song.entity.Song;
 import com.conti.domain.song.entity.SongTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,11 +34,15 @@ public record SongDetailResponse(
         List<SongFileResponse> files,
         @Schema(description = "콘티 사용 횟수", example = "5")
         long usageCount,
+        @Schema(description = "마지막 사용일")
+        LocalDate lastUsedAt,
         @Schema(description = "곡 구조 섹션 목록")
-        List<SongSectionResponse> sections
+        List<SongSectionResponse> sections,
+        @Schema(description = "편곡 목록")
+        List<ArrangementResponse> arrangements
 ) {
 
-    public static SongDetailResponse from(Song song, long usageCount) {
+    public static SongDetailResponse from(Song song, long usageCount, LocalDate lastUsedAt) {
         List<String> tagNames = song.getSongTags().stream()
                 .map(SongTag::getTag)
                 .toList();
@@ -48,6 +53,10 @@ public record SongDetailResponse(
 
         List<SongSectionResponse> sectionResponses = song.getSongSections().stream()
                 .map(SongSectionResponse::from)
+                .toList();
+
+        List<ArrangementResponse> arrangementResponses = song.getArrangements().stream()
+                .map(ArrangementResponse::from)
                 .toList();
 
         return new SongDetailResponse(
@@ -63,7 +72,9 @@ public record SongDetailResponse(
                 song.getMusicUrl(),
                 fileResponses,
                 usageCount,
-                sectionResponses
+                lastUsedAt,
+                sectionResponses,
+                arrangementResponses
         );
     }
 }

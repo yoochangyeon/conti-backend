@@ -1,5 +1,6 @@
 package com.conti.global.auth;
 
+import com.conti.domain.team.entity.TeamRole;
 import com.conti.domain.team.repository.TeamMemberRepository;
 import com.conti.global.error.BusinessException;
 import com.conti.global.error.ErrorCode;
@@ -55,8 +56,11 @@ public class TeamAuthInterceptor implements HandlerInterceptor {
 
         String[] allowedRoles = teamAuth.roles();
         if (allowedRoles.length > 0) {
-            String memberRole = teamMember.getRole().name();
-            boolean hasRole = Arrays.asList(allowedRoles).contains(memberRole);
+            TeamRole memberRole = teamMember.getRole();
+            // Find minimum required role from allowed roles and check hierarchy
+            boolean hasRole = Arrays.stream(allowedRoles)
+                    .map(TeamRole::valueOf)
+                    .anyMatch(required -> memberRole.isAtLeast(required));
             if (!hasRole) {
                 throw new BusinessException(ErrorCode.FORBIDDEN);
             }

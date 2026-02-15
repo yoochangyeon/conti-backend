@@ -1,8 +1,10 @@
 package com.conti.domain.song.repository;
 
 import com.conti.domain.song.dto.SongSearchCondition;
+import com.conti.domain.song.dto.TopSongResponse;
 import com.conti.domain.song.entity.Song;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -110,5 +112,34 @@ public class SongQueryRepositoryImpl implements SongQueryRepository {
                         .from(songUsage)
                         .where(songUsage.leaderId.eq(leaderId))
         );
+    }
+
+    @Override
+    public List<TopSongResponse> findTopSongs(Long teamId, LocalDate fromDate, LocalDate toDate, int limit) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(song.team.id.eq(teamId));
+        if (fromDate != null) {
+            builder.and(songUsage.usedAt.goe(fromDate));
+        }
+        if (toDate != null) {
+            builder.and(songUsage.usedAt.loe(toDate));
+        }
+
+        return queryFactory
+                .select(Projections.constructor(TopSongResponse.class,
+                        song.id,
+                        song.title,
+                        song.artist,
+                        song.originalKey,
+                        songUsage.count(),
+                        songUsage.usedAt.max()
+                ))
+                .from(songUsage)
+                .join(songUsage.song, song)
+                .where(builder)
+                .groupBy(song.id, song.title, song.artist, song.originalKey)
+                .orderBy(songUsage.count().desc())
+                .limit(limit)
+                .fetch();
     }
 }

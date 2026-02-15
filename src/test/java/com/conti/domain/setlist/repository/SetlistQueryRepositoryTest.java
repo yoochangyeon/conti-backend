@@ -1,6 +1,7 @@
 package com.conti.domain.setlist.repository;
 
 import com.conti.domain.setlist.dto.SetlistSearchCondition;
+import com.conti.domain.setlist.entity.WorshipType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -60,10 +61,10 @@ class SetlistQueryRepositoryTest {
         @DisplayName("예배 유형 조건을 생성한다")
         void worshipTypeCondition() {
             // given & when
-            SetlistSearchCondition condition = new SetlistSearchCondition(null, null, "주일1부");
+            SetlistSearchCondition condition = new SetlistSearchCondition(null, null, WorshipType.SUNDAY_1ST);
 
             // then
-            assertThat(condition.worshipType()).isEqualTo("주일1부");
+            assertThat(condition.worshipType()).isEqualTo(WorshipType.SUNDAY_1ST);
         }
 
         @Test
@@ -89,12 +90,12 @@ class SetlistQueryRepositoryTest {
             LocalDate toDate = LocalDate.of(2026, 2, 28);
 
             // when
-            SetlistSearchCondition condition = new SetlistSearchCondition(fromDate, toDate, "주일2부");
+            SetlistSearchCondition condition = new SetlistSearchCondition(fromDate, toDate, WorshipType.SUNDAY_2ND);
 
             // then
             assertThat(condition.fromDate()).isEqualTo(LocalDate.of(2026, 2, 1));
             assertThat(condition.toDate()).isEqualTo(LocalDate.of(2026, 2, 28));
-            assertThat(condition.worshipType()).isEqualTo("주일2부");
+            assertThat(condition.worshipType()).isEqualTo(WorshipType.SUNDAY_2ND);
         }
     }
 }

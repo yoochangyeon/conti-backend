@@ -7,8 +7,10 @@ import com.conti.domain.song.dto.SongResponse;
 import com.conti.domain.song.dto.SongSearchCondition;
 import com.conti.domain.song.dto.SongSectionRequest;
 import com.conti.domain.song.dto.SongSectionResponse;
+import com.conti.domain.song.dto.SongStatsResponse;
 import com.conti.domain.song.dto.SongUpdateRequest;
 import com.conti.domain.song.dto.SongUsageResponse;
+import com.conti.domain.song.dto.TopSongResponse;
 import com.conti.domain.song.service.SongService;
 import com.conti.global.auth.TeamAuth;
 import com.conti.global.common.ApiResponse;
@@ -19,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "찬양", description = "찬양 곡 관리")
@@ -55,6 +59,28 @@ public class SongController {
     ) {
         SongSearchCondition condition = new SongSearchCondition(keyword, tags, key, unusedWeeks, leaderId);
         return ApiResponse.ok(songService.getSongs(teamId, condition, pageable));
+    }
+
+    @Operation(summary = "곡 사용 통계 - 인기 곡 랭킹", description = "기간별 사용 횟수 Top N 곡 조회")
+    @TeamAuth(roles = {"ADMIN", "VIEWER", "GUEST"})
+    @GetMapping("/stats")
+    public ApiResponse<List<TopSongResponse>> getTopSongs(
+            @Parameter(description = "팀 ID") @PathVariable Long teamId,
+            @Parameter(description = "시작 날짜") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @Parameter(description = "종료 날짜") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @Parameter(description = "상위 N개") @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ApiResponse.ok(songService.getTopSongs(teamId, fromDate, toDate, limit));
+    }
+
+    @Operation(summary = "개별 곡 사용 통계", description = "월별 사용, 키 분포, 인도자별 통계")
+    @TeamAuth(roles = {"ADMIN", "VIEWER", "GUEST"})
+    @GetMapping("/{songId}/stats")
+    public ApiResponse<SongStatsResponse> getSongStats(
+            @Parameter(description = "팀 ID") @PathVariable Long teamId,
+            @Parameter(description = "곡 ID") @PathVariable Long songId
+    ) {
+        return ApiResponse.ok(songService.getSongStats(teamId, songId));
     }
 
     @Operation(summary = "찬양 추가")

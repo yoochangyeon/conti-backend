@@ -175,4 +175,10 @@ public abstract class BaseE2ETest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON));
     }
+
+    protected ResultActions performPatchNoBody(String url, String token) throws Exception {
+        return mockMvc.perform(patch(url)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON));
+    }
 }

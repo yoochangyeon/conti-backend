@@ -15,8 +15,10 @@ public record SetlistDetailResponse(
         String title,
         @Schema(description = "예배 날짜", example = "2024-01-07")
         LocalDate worshipDate,
-        @Schema(description = "예배 타입", example = "주일예배")
+        @Schema(description = "예배 타입", example = "SUNDAY_1ST")
         String worshipType,
+        @Schema(description = "예배 타입 표시명", example = "주일 1부 예배")
+        String worshipTypeDisplayName,
         @Schema(description = "인도자 ID", example = "1")
         Long leaderId,
         @Schema(description = "곡 수", example = "5")
@@ -27,7 +29,7 @@ public record SetlistDetailResponse(
         String memo,
         @Schema(description = "생성자 ID", example = "1")
         Long creatorId,
-        @Schema(description = "콘티 곡 목록")
+        @Schema(description = "콘티 항목 목록")
         List<SetlistItemResponse> items
 ) {
 
@@ -40,7 +42,8 @@ public record SetlistDetailResponse(
                 setlist.getId(),
                 setlist.getTitle(),
                 setlist.getWorshipDate(),
-                setlist.getWorshipType(),
+                setlist.getWorshipType() != null ? setlist.getWorshipType().name() : null,
+                setlist.getWorshipType() != null ? setlist.getWorshipType().getDisplayName() : null,
                 setlist.getLeaderId(),
                 setlist.getSetlistItems().size(),
                 setlist.getCreatedAt(),

@@ -61,6 +61,36 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    /**
+     * Generate a long-lived calendar token for iCal feed access.
+     * Token is valid for 1 year and includes a "calendar" type claim.
+     */
+    public String generateCalendarToken(Long userId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + 365L * 24 * 60 * 60 * 1000); // 1 year
+
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("type", "calendar")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key)
+                .compact();
+    }
+
+    public boolean isCalendarToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return "calendar".equals(claims.get("type", String.class));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser()

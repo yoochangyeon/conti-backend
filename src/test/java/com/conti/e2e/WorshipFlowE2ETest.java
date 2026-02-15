@@ -3,6 +3,8 @@ package com.conti.e2e;
 import com.conti.domain.setlist.dto.SetlistCreateRequest;
 import com.conti.domain.setlist.dto.SetlistItemRequest;
 import com.conti.domain.setlist.dto.ReorderRequest;
+import com.conti.domain.setlist.entity.SetlistItemType;
+import com.conti.domain.setlist.entity.WorshipType;
 import com.conti.domain.song.dto.SongCreateRequest;
 import com.conti.domain.team.dto.TeamCreateRequest;
 import com.conti.domain.team.entity.Team;
@@ -98,7 +100,7 @@ class WorshipFlowE2ETest extends BaseE2ETest {
 
         // 5. 콘티(세트리스트) 생성
         SetlistCreateRequest setlistRequest = new SetlistCreateRequest(
-                "주일 1부 예배 콘티", LocalDate.of(2026, 2, 15), "주일1부", user.getId(), "이번 주 콘티"
+                "주일 1부 예배 콘티", LocalDate.of(2026, 2, 15), WorshipType.SUNDAY_1ST, user.getId(), "이번 주 콘티"
         );
         MvcResult setlistResult = performPost("/api/v1/teams/" + teamId + "/setlists", token, setlistRequest)
                 .andExpect(status().isOk())
@@ -108,7 +110,7 @@ class WorshipFlowE2ETest extends BaseE2ETest {
         Long setlistId = ((Number) JsonPath.read(setlistResult.getResponse().getContentAsString(), "$.data.id")).longValue();
 
         // 6. 콘티에 곡 2개 추가
-        SetlistItemRequest item1Request = new SetlistItemRequest(song1Id, "G", "키 유지");
+        SetlistItemRequest item1Request = new SetlistItemRequest(SetlistItemType.SONG, song1Id, null, "G", null, "키 유지", null, null);
         MvcResult item1Result = performPost("/api/v1/teams/" + teamId + "/setlists/" + setlistId + "/items", token, item1Request)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.songTitle").value("이 땅의 모든 찬양"))
@@ -116,7 +118,7 @@ class WorshipFlowE2ETest extends BaseE2ETest {
                 .andReturn();
         Long item1Id = ((Number) JsonPath.read(item1Result.getResponse().getContentAsString(), "$.data.id")).longValue();
 
-        SetlistItemRequest item2Request = new SetlistItemRequest(song2Id, "C", "반음 내림");
+        SetlistItemRequest item2Request = new SetlistItemRequest(SetlistItemType.SONG, song2Id, null, "C", null, "반음 내림", null, null);
         MvcResult item2Result = performPost("/api/v1/teams/" + teamId + "/setlists/" + setlistId + "/items", token, item2Request)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.songTitle").value("감사해"))

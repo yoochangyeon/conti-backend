@@ -21,6 +21,7 @@ import com.conti.domain.song.repository.SongTagRepository;
 import com.conti.domain.song.repository.SongUsageRepository;
 import com.conti.domain.team.entity.Team;
 import com.conti.domain.team.repository.TeamRepository;
+import com.conti.domain.user.repository.UserRepository;
 import com.conti.global.error.BusinessException;
 import com.conti.global.error.ErrorCode;
 import com.conti.infra.s3.S3FileService;
@@ -74,6 +75,9 @@ class SongServiceTest {
 
     @Mock
     private SetlistRepository setlistRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private S3FileService s3FileService;
@@ -223,7 +227,8 @@ class SongServiceTest {
             Song song = createSong(team);
 
             given(songRepository.findById(songId)).willReturn(Optional.of(song));
-            given(songUsageRepository.findBySongId(songId)).willReturn(Collections.emptyList());
+            given(songUsageRepository.countBySongId(songId)).willReturn(0L);
+            given(songUsageRepository.findLastUsedAt(songId)).willReturn(null);
 
             // when
             SongDetailResponse result = songService.getSong(teamId, songId);
@@ -256,7 +261,8 @@ class SongServiceTest {
             song.getSongSections().add(section);
 
             given(songRepository.findById(songId)).willReturn(Optional.of(song));
-            given(songUsageRepository.findBySongId(songId)).willReturn(Collections.emptyList());
+            given(songUsageRepository.countBySongId(songId)).willReturn(0L);
+            given(songUsageRepository.findLastUsedAt(songId)).willReturn(null);
 
             // when
             SongDetailResponse result = songService.getSong(teamId, songId);

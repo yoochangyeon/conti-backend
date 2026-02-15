@@ -4,6 +4,7 @@ import com.conti.domain.team.entity.TeamMember;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "팀 멤버 응답")
 public record TeamMemberResponse(
@@ -18,17 +19,24 @@ public record TeamMemberResponse(
         @Schema(description = "역할", example = "ADMIN")
         String role,
         @Schema(description = "가입 일시")
-        LocalDateTime joinedAt
+        LocalDateTime joinedAt,
+        @Schema(description = "포지션 목록")
+        List<MemberPositionResponse> positions
 ) {
 
     public static TeamMemberResponse from(TeamMember member) {
+        List<MemberPositionResponse> positionResponses = member.getPositions().stream()
+                .map(MemberPositionResponse::from)
+                .toList();
+
         return new TeamMemberResponse(
                 member.getId(),
                 member.getUser().getId(),
                 member.getUser().getName(),
                 member.getUser().getProfileImage(),
                 member.getRole().name(),
-                member.getCreatedAt()
+                member.getCreatedAt(),
+                positionResponses
         );
     }
 }

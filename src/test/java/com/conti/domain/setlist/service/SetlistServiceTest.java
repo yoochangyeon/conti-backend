@@ -10,6 +10,8 @@ import com.conti.domain.setlist.dto.SetlistSearchCondition;
 import com.conti.domain.setlist.dto.SetlistUpdateRequest;
 import com.conti.domain.setlist.entity.Setlist;
 import com.conti.domain.setlist.entity.SetlistItem;
+import com.conti.domain.setlist.entity.SetlistItemType;
+import com.conti.domain.setlist.entity.WorshipType;
 import com.conti.domain.setlist.repository.SetlistItemRepository;
 import com.conti.domain.setlist.repository.SetlistRepository;
 import com.conti.domain.song.entity.Song;
@@ -17,6 +19,9 @@ import com.conti.domain.song.repository.SongRepository;
 import com.conti.domain.song.repository.SongUsageRepository;
 import com.conti.domain.team.entity.Team;
 import com.conti.domain.team.repository.TeamRepository;
+import com.conti.domain.setlist.repository.SetlistTemplateRepository;
+import com.conti.domain.notification.service.NotificationService;
+import com.conti.domain.schedule.repository.ServiceScheduleRepository;
 import com.conti.global.error.BusinessException;
 import com.conti.global.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -63,6 +68,15 @@ class SetlistServiceTest {
     @Mock
     private TeamRepository teamRepository;
 
+    @Mock
+    private SetlistTemplateRepository setlistTemplateRepository;
+
+    @Mock
+    private ServiceScheduleRepository serviceScheduleRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
     private Team createTeam() {
         return Team.builder()
                 .name("찬양팀")
@@ -77,7 +91,7 @@ class SetlistServiceTest {
                 .creatorId(1L)
                 .title("주일예배 콘티")
                 .worshipDate(LocalDate.of(2026, 2, 9))
-                .worshipType("주일1부")
+                .worshipType(WorshipType.SUNDAY_1ST)
                 .leaderId(1L)
                 .memo("메모")
                 .build();
@@ -117,7 +131,7 @@ class SetlistServiceTest {
             // then
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().get(0).title()).isEqualTo("주일예배 콘티");
-            assertThat(result.getContent().get(0).worshipType()).isEqualTo("주일1부");
+            assertThat(result.getContent().get(0).worshipType()).isEqualTo("SUNDAY_1ST");
         }
     }
 
@@ -133,7 +147,7 @@ class SetlistServiceTest {
             Long userId = 1L;
             Team team = createTeam();
             SetlistCreateRequest request = new SetlistCreateRequest(
-                    "주일예배", LocalDate.of(2026, 2, 9), "주일1부", 1L, "메모"
+                    "주일예배", LocalDate.of(2026, 2, 9), WorshipType.SUNDAY_1ST, 1L, "메모"
             );
 
             given(teamRepository.findById(teamId)).willReturn(Optional.of(team));
@@ -280,7 +294,7 @@ class SetlistServiceTest {
             Setlist setlist = createSetlist(team);
             Song song = createSong(team);
 
-            SetlistItemRequest request = new SetlistItemRequest(1L, "C", "메모");
+            SetlistItemRequest request = new SetlistItemRequest(SetlistItemType.SONG, 1L, null, "C", null, "메모", null, null);
 
             given(setlistRepository.findById(setlistId)).willReturn(Optional.of(setlist));
             given(songRepository.findById(1L)).willReturn(Optional.of(song));
@@ -302,7 +316,7 @@ class SetlistServiceTest {
             Long setlistId = 1L;
             Team team = createTeam();
             Setlist setlist = createSetlist(team);
-            SetlistItemRequest request = new SetlistItemRequest(999L, "C", null);
+            SetlistItemRequest request = new SetlistItemRequest(SetlistItemType.SONG, 999L, null, "C", null, null, null, null);
 
             given(setlistRepository.findById(setlistId)).willReturn(Optional.of(setlist));
             given(songRepository.findById(999L)).willReturn(Optional.empty());
@@ -337,7 +351,7 @@ class SetlistServiceTest {
                     .memo("원래 메모")
                     .build();
 
-            SetlistItemRequest request = new SetlistItemRequest(null, "D", "수정 메모");
+            SetlistItemRequest request = new SetlistItemRequest(null, null, null, "D", null, "수정 메모", null, null);
 
             given(setlistItemRepository.findById(itemId)).willReturn(Optional.of(item));
 

@@ -1,5 +1,6 @@
 package com.conti.domain.setlist.dto;
 
+import com.conti.domain.setlist.entity.WorshipType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,8 +12,8 @@ public record SetlistCreateRequest(
         String title,
         @Schema(description = "예배 날짜", example = "2024-01-07")
         @NotNull LocalDate worshipDate,
-        @Schema(description = "예배 타입", example = "주일예배")
-        String worshipType,
+        @Schema(description = "예배 타입", example = "SUNDAY_1ST")
+        WorshipType worshipType,
         @Schema(description = "인도자 ID", example = "1")
         Long leaderId,
         @Schema(description = "메모")

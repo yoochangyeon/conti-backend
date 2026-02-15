@@ -33,6 +33,10 @@ public class SongSection {
     @JoinColumn(name = "song_id")
     private Song song;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "arrangement_id")
+    private SongArrangement arrangement;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "section_type", nullable = false, length = 20)
     private SectionType sectionType;
