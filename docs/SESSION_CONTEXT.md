@@ -1,111 +1,72 @@
-# Conti - 세션 컨텍스트
+# Conti Backend - 세션 컨텍스트
 
-> 마지막 업데이트: 2026-02-05
+> 마지막 업데이트: 2026-02-16
 
 ## 프로젝트 상태
 
 ```
-Phase: 설계 완료 ✅
-Next:  개발 워크플로우 수립 또는 구현 시작
+Phase: Phase 2 핵심 확장 거의 완료 🔶
+Next:  FCM 실 연동 (Step 5) → 배포 인프라 (Step 8)
 ```
 
-## 완료된 작업
+## 현재 구현 현황
 
-### 1. 브레인스토밍 & 요구사항 정의 ✅
+### 백엔드 (Spring Boot) — 핵심 기능 구현 완료
 
-- 서비스 비전: 대한민국 예배자 커뮤니티 플랫폼
-- MVP 목표: 찬양팀 콘티 협업 도구 + 찬양 데이터베이스
-- 타겟 사용자: 찬양팀 멤버, 인도자, 목회자
-- 수익 모델: 완전 무료 (기부 기반)
+| 영역 | 구현 현황 |
+|------|----------|
+| **컨트롤러** | 17개 |
+| **API 엔드포인트** | 82개 |
+| **JPA 엔티티** | 29개 |
+| **서비스 클래스** | 15개 |
+| **리포지토리** | 23개 (JPA 20 + QueryDSL 3) |
+| **DTO** | 60개 |
+| **DB 마이그레이션** | V1~V7 |
+| **테스트 클래스** | 23개 (Unit 10 + E2E 13) |
+| **테스트 케이스** | 186+ |
 
-### 2. 시장 조사 ✅
+### 구현된 도메인
 
-**한국 시장 분석:**
-- 콘티메이크: 개인용, 팀 협업 없음
-- 예배노트: 악보 제공만, 콘티 기능 없음
-- 기존 서비스들 한계: 팀 협업 부재, 커뮤니티 없음
+- **User**: 인증 (OAuth2 카카오/구글 + JWT), 프로필, 팀 목록
+- **Team**: CRUD, 멤버 관리, 초대코드, 포지션, 공지사항, 세분화 권한 (GUEST/VIEWER/SCHEDULER/EDITOR/ADMIN)
+- **Song**: CRUD, 태그(자동완성 API), 파일(S3+URL), 섹션, 사용이력, 고급 검색, 다중 편곡(CRUD), 사용 통계
+- **Setlist**: CRUD, 아이템 관리, 순서변경, 비곡 항목, 복사, 템플릿(CRUD), 색상, 서비스구간, 노트
+- **Schedule**: 벌크 배정, 수락/거절, 충돌감지, 매트릭스뷰, 셀프사인업, 캘린더 구독(iCal)
+- **Blockout**: CRUD, 기간 조회
+- **Notification**: 알림 목록/읽음처리/디바이스토큰 (FCM은 Mock)
 
-**해외 시장 분석:**
-- Planning Center Services: 팀 기능 강력, 한국어/한국 찬양 미지원
-- OnStage: 실시간 동기화, 한국 시장 미타겟
+### 미구현 사항
 
-**차별점:**
-- 팀 단위 협업 중심
-- 찬양 데이터베이스화 (사용 이력, 키별, 인도자별)
-- 한국 찬양팀 타겟
-- 커뮤니티 확장 가능 구조
-
-### 3. 기술 스택 결정 ✅
-
-| 구분 | 기술 |
+| 항목 | 상태 |
 |------|------|
-| 프론트엔드 | React Native 또는 Flutter |
-| 백엔드 | Spring Boot (Java) |
-| ORM | Spring Data JPA + QueryDSL |
-| DB | MySQL (FK 제약조건 없이, JPA 레벨 관리) |
-| 인프라 | AWS (EC2 + RDS + S3) |
-| 인증 | OAuth2 (카카오, 구글) + JWT |
+| FCM 실제 푸시 발송 | MockPushNotificationService → 실 FCM 교체 필요 |
+| 배포 인프라 | AWS EC2/ECS + RDS 미구성 |
+| CI/CD | GitHub Actions 미구성 |
 
-### 4. 시스템 설계 ✅
+## DB 마이그레이션 현황
 
-**ERD (9개 테이블):**
-- users, teams, team_members
-- songs, song_tags, song_files, song_usages
-- setlists, setlist_items
+| 버전 | 내용 | 상태 |
+|------|------|:----:|
+| V1 | 초기 스키마 (users, teams, team_members, songs, song_files, setlists, setlist_items) | ✅ |
+| V2 | 곡 섹션 (song_sections, section_type) | ✅ |
+| V3 | 스케줄링 + 포지션 + 비곡 항목 | ✅ |
+| V4 | 세트리스트 강화 (color, service_phase, templates, notes) | ✅ |
+| V5 | 곡 편곡 (song_arrangements) | ✅ |
+| V6 | 알림 시스템 (notifications, device_tokens) | ✅ |
+| V7 | 팀 강화 (team_notices) | ✅ |
 
-**REST API (~25개 엔드포인트):**
-- Auth: 소셜 로그인, 토큰 관리
-- User: 프로필, 팀 목록
-- Team: CRUD, 멤버 관리, 초대
-- Song: CRUD, 검색/필터, 파일, 태그
-- Setlist: CRUD, 아이템 관리
+## 주요 기술 결정 사항
 
-**시스템 아키텍처:**
-- 레이어드 아키텍처 (Controller → Service → Repository)
-- 도메인별 패키지 구조
-- AWS 인프라 (~$32/월 예상)
-
-**인증/권한:**
-- JWT (Access 1시간, Refresh 14일)
-- 팀 역할: ADMIN, VIEWER, GUEST
-- 커스텀 어노테이션 기반 권한 검증
-
-## 생성된 문서
-
-```
-/docs/DESIGN.md    - 전체 시스템 설계 문서
-/docs/SESSION_CONTEXT.md - 이 파일 (세션 컨텍스트)
-```
-
-## 다음 단계
-
-1. **`/sc:workflow`** - 개발 스프린트/태스크 분해
-   - MVP 기능별 우선순위
-   - 스프린트 계획 (2주 단위 권장)
-   - 태스크 분해 및 의존성
-
-2. **`/sc:implement`** - 실제 구현 시작
-   - Spring Boot 프로젝트 초기화
-   - JPA 엔티티 구현
-   - API 개발
-
-## 주요 결정 사항 요약
-
-| 결정 사항 | 선택 | 이유 |
-|----------|------|------|
-| 백엔드 언어 | Java (Spring Boot) | 취업 목표 (삼성, 네이버, 카카오, 토스, 우형) |
-| FK 제약조건 | DB 레벨 X, JPA 레벨만 | 유연한 데이터 관리 |
-| ORM | JPA + QueryDSL | 동적 검색 쿼리 필요 |
-| 인증 | 소셜 로그인만 | 간편한 가입, 이메일 인증 불필요 |
-| 수익모델 | 완전 무료 | 커뮤니티 성장 우선 |
-
-## 열린 질문 (미결정)
-
-1. 프론트엔드 최종 선택: React Native vs Flutter
-2. 소셜 로그인 추가: 애플 로그인 필요?
-3. 앱 이름/브랜딩 확정
-4. AWS 상세 구성 (EC2 vs ECS)
+| 결정 | 선택 | 이유 |
+|------|------|------|
+| 백엔드 | Spring Boot 3.5 (Java 25) | 취업 목표 + 엔터프라이즈 생태계 |
+| ORM | JPA + QueryDSL | 동적 검색 쿼리 |
+| DB | MySQL 8.0+ | Flyway 마이그레이션 |
+| FK | JPA 레벨만 | 유연한 데이터 관리 |
+| 인증 | OAuth2 + JWT | Access 1h, Refresh 14d |
+| 파일 | AWS S3 | 악보 파일 |
+| 권한 | 계층형 Enum | GUEST(0) < VIEWER(1) < SCHEDULER(2) < EDITOR(3) < ADMIN(4) |
 
 ---
 
-*이 파일은 세션 간 컨텍스트 유지를 위해 자동 생성되었습니다.*
+*이 파일은 세션 간 컨텍스트 유지를 위해 작성되었습니다.*
